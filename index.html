@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My To-Do List - Glassmorphism Edition</title>
+  
+  <!-- Tailwind CSS 로드 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 웹폰트: Pretendard & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Pretendard', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'blob': 'blob 10s infinite',
+            'slide-in': 'slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+          },
+          keyframes: {
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -40px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.95)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            },
+            slideIn: {
+              '0%': { opacity: '0', transform: 'translateY(12px) scale(0.98)' },
+              '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+            },
+            shake: {
+              '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+              '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+              '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+              '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* 커스텀 스크롤바 스타일링 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.4);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.7);
+    }
+
+    /* 글래스모피즘 핵심 스타일 */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* 기존 .highlight 클래스의 현대적 재해석 */
+    .highlight {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #c7d2fe;
+      padding: 12px 16px;
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08);
+    }
+
+    /* 할 일 리스트 아이템 스타일 및 호버 인터랙션 */
+    #todoList li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    #todoList li:hover {
+      transform: translateY(-2px);
+      background: rgba(30, 41, 59, 0.75);
+      border-color: rgba(99, 102, 241, 0.45);
+      box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.15);
+    }
+
+    /* 할 일 텍스트 및 커스텀 체크박스 인디케이터 */
+    #todoList li span {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      cursor: pointer;
+      color: #f1f5f9;
+      font-size: 0.95rem;
+      font-weight: 500;
+      word-break: break-all;
+      transition: all 0.25s ease;
+      user-select: none;
+    }
+
+    /* 가상 요소를 이용한 세련된 체크박스 UI */
+    #todoList li span::before {
+      content: '';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border-radius: 7px;
+      border: 2px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.5);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #todoList li:hover span::before {
+      border-color: #818cf8;
+    }
+
+    /* 완료(.completed) 상태 스타일링 */
+    #todoList li.completed {
+      background: rgba(15, 23, 42, 0.35);
+      border-color: rgba(255, 255, 255, 0.03);
+    }
+
+    #todoList li.completed span {
+      text-decoration: line-through;
+      color: #64748b;
+    }
+
+    #todoList li.completed span::before {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-color: transparent;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+      background-size: 13px;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* 삭제 버튼 스타일 (레드 네온 포인트) */
+    #todoList li button {
+      margin-left: 12px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #todoList li button:hover {
+      color: #fda4af;
+      background: rgba(244, 63, 94, 0.15);
+      border-color: rgba(244, 63, 94, 0.5);
+      box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
+      transform: scale(1.04);
+    }
+
+    #todoList li button:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#060913] text-slate-100 flex items-center justify-center p-4 sm:p-6 relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+  <!-- 배경 추상 네온 오브 (Ambient Blobs) -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/25 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
+    <div class="absolute top-[20%] right-[-10%] w-96 h-96 bg-purple-600/25 rounded-full mix-blend-screen filter blur-[100px] animate-blob" style="animation-delay: 2s;"></div>
+    <div class="absolute bottom-[-15%] left-[25%] w-[28rem] h-[28rem] bg-cyan-500/20 rounded-full mix-blend-screen filter blur-[110px] animate-blob" style="animation-delay: 4s;"></div>
+  </div>
+
+  <!-- 커스텀 알림 토스트 메시지 (alert() 대체용) -->
+  <div id="toastBox" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none">
+    <div class="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-rose-500/40 shadow-[0_10px_30px_rgba(244,63,94,0.25)] text-rose-200 text-sm font-medium">
+      <svg class="w-5 h-5 text-rose-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span id="toastText">할 일을 입력하세요.</span>
+    </div>
+  </div>
+
+  <!-- 메인 글래스모피즘 카드 컨테이너 -->
+  <main class="relative z-10 w-full max-w-lg glass-card rounded-3xl p-6 sm:p-8 transition-all">
+    
+    <!-- 상단 헤더 & 타이틀 영역 -->
+    <header class="mb-6">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <span class="px-2.5 py-0.5 text-[11px] font-bold tracking-wider uppercase rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+          Workspace
+        </span>
+      </div>
+      
+      <!-- 기존 #title 유지 + 그라데이션 텍스트 효과 적용 -->
+      <h1 id="title" class="text-3xl sm:text-4xl font-extrabold text-center tracking-tight bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent pb-1">
+        오늘의 할 일
+      </h1>
+    </header>
+
+    <!-- 기존 #message 안내 문구 영역 -->
+    <div class="mb-6">
+      <p id="message" class="text-sm font-medium text-center flex items-center justify-center gap-2 transition-all">
+        할 일을 관리해 보세요.
+      </p>
+    </div>
+
+    <!-- 입력 영역: 다크 인풋 + 네온 글로우 + 그라데이션 추가 버튼 -->
+    <div id="inputGroup" class="flex gap-2.5 mb-7">
+      <div class="relative flex-1 group">
+        <input 
+          id="todoInput"
+          type="text"
+          placeholder="새로운 할 일을 입력하세요..."
+          autocomplete="off"
+          class="w-full px-4 py-3.5 rounded-2xl bg-slate-950/60 border border-white/10 text-slate-100 placeholder-slate-500 text-sm sm:text-base outline-none transition-all duration-300 focus:border-indigo-400/70 focus:bg-slate-900/90 focus:shadow-[0_0_20px_rgba(99,102,241,0.25)]"
+        >
+      </div>
+      <button 
+        onclick="addTodo()"
+        class="px-5 sm:px-6 py-3.5 rounded-2xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_28px_rgba(99,102,241,0.65)] active:scale-95 transition-all duration-200 shrink-0 cursor-pointer flex items-center gap-1.5"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>추가</span>
+      </button>
+    </div>
+
+    <!-- 상태 표시 영역: #count 카운터 + 시각적 프로그레스 바 -->
+    <div class="mb-5 bg-slate-950/40 rounded-2xl p-4 border border-white/5">
+      <div class="flex items-center justify-between mb-2.5">
+        <!-- 기존 #count 유지 -->
+        <p id="count" class="text-xs sm:text-sm font-semibold text-slate-300 tracking-wide">
+          전체 2개 / 완료 1개
+        </p>
+        <span id="percentText" class="text-xs font-bold text-cyan-400">50%</span>
+      </div>
+      
+      <!-- 슬림 프로그레스 바 -->
+      <div class="w-full h-2 bg-slate-800/80 rounded-full overflow-hidden p-[1px]">
+        <div 
+          id="progressBar" 
+          class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 shadow-[0_0_10px_rgba(56,189,248,0.6)] transition-all duration-500 ease-out"
+          style="width: 50%;"
+        ></div>
+      </div>
+    </div>
+
+    <!-- 할 일 리스트 영역 (#todoList) -->
+    <div class="max-h-[340px] overflow-y-auto pr-1 -mr-1">
+      <ul id="todoList" class="list-none p-0 m-0">
+        <li class="completed">
+          <span>JavaScript 공부하기</span>
+          <button type="button" aria-label="삭제">삭제</button>
+        </li>
+        <li>
+          <span>과제 제출하기</span>
+          <button type="button" aria-label="삭제">삭제</button>
+        </li>
+      </ul>
+      
+      <!-- 할 일이 0개일 때 보여줄 빈 상태(Empty State) 가이드 -->
+      <div id="emptyState" class="hidden py-10 text-center">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-800/60 border border-white/5 text-slate-400 mb-3">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p class="text-sm text-slate-400 font-medium">등록된 할 일이 없습니다.</p>
+        <p class="text-xs text-slate-500 mt-1">위 입력창에서 새로운 목표를 추가해 보세요!</p>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // 커스텀 토스트 메시지 표시 유틸리티 (alert 대체)
+    let toastTimeout;
+    function showNotification(msg) {
+      const toastBox = document.getElementById("toastBox");
+      const toastText = document.getElementById("toastText");
+      const inputGroup = document.getElementById("inputGroup");
+
+      toastText.textContent = msg;
+      toastBox.classList.remove("opacity-0", "-translate-y-4");
+      toastBox.classList.add("opacity-100", "translate-y-0");
+
+      // 입력창 흔들림 피드백
+      inputGroup.classList.remove("animate-shake");
+      void inputGroup.offsetWidth; // 리플로우 트리거
+      inputGroup.classList.add("animate-shake");
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toastBox.classList.remove("opacity-100", "translate-y-0");
+        toastBox.classList.add("opacity-0", "-translate-y-4");
+      }, 2500);
+    }
+
+    // 1. 제목 텍스트 및 스타일 변경 (기존 구조 유지, 그라데이션 클래스 보존을 위해 인라인 색상 대신 텍스트만 업데이트)
+    let title = document.querySelector("#title");
+    title.textContent = "My To-Do List";
+
+    // 2. 안내 문구 변경 및 하이라이트 클래스 적용
+    let message = document.querySelector("#message");
+    message.innerHTML = '<span>✨</span> 오늘도 하나씩 완료해 봅시다!';
+    message.classList.add("highlight");
+
+    // 3. 할 일 개수를 계산해서 화면 및 프로그레스 바에 표시하는 함수
+    function updateCount() {
+      let allItems = document.querySelectorAll("#todoList li");
+      let completedItems = document.querySelectorAll("#todoList li.completed");
+
+      let totalCount = allItems.length;
+      let completedCount = completedItems.length;
+
+      // 기존 #count 텍스트 업데이트 유지
+      document.querySelector("#count").textContent =
+        "전체 " + totalCount + "개 / 완료 " + completedCount + "개";
+
+      // 프로그레스 바 및 퍼센트 계산 업데이트
+      let percentage = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+      let progressBar = document.querySelector("#progressBar");
+      let percentText = document.querySelector("#percentText");
+      let emptyState = document.querySelector("#emptyState");
+
+      if (progressBar) {
+        progressBar.style.width = percentage + "%";
+      }
+      if (percentText) {
+        percentText.textContent = percentage + "%";
+      }
+
+      // 빈 목록 안내 표시 토글
+      if (emptyState) {
+        if (totalCount === 0) {
+          emptyState.classList.remove("hidden");
+        } else {
+          emptyState.classList.add("hidden");
+        }
+      }
+    }
+
+    // 4. 할 일 항목(li)에 완료 클릭 & 삭제 버튼 기능을 붙이는 함수
+    function setupTodoEvents(li) {
+      let textSpan = li.querySelector("span");
+      let deleteBtn = li.querySelector("button");
+
+      // 텍스트 클릭 시 완료 상태 토글
+      textSpan.addEventListener("click", function () {
+        li.classList.toggle("completed");
+        updateCount();
+      });
+
+      // 삭제 버튼 클릭 시 부드러운 페이드 아웃 후 항목 제거
+      deleteBtn.addEventListener("click", function () {
+        li.style.opacity = "0";
+        li.style.transform = "translateX(15px) scale(0.95)";
+        setTimeout(() => {
+          li.remove();
+          updateCount();
+        }, 180);
+      });
+    }
+
+    // 5. 페이지 로드 시 기존에 있던 li 항목들에도 이벤트 연결
+    let existingItems = document.querySelectorAll("#todoList li");
+    for (let i = 0; i < existingItems.length; i++) {
+      setupTodoEvents(existingItems[i]);
+    }
+    updateCount();
+
+    // 6. 새로운 할 일 추가 함수
+    function addTodo() {
+      // 입력값 가져오기
+      let input = document.querySelector("#todoInput");
+      let text = input.value.trim();
+
+      // 빈 입력 확인 (세련된 토스트 알림으로 표시)
+      if (text === "") {
+        showNotification("할 일을 입력하세요.");
+        input.focus();
+        return;
+      }
+
+      // 새로운 li, span(텍스트), button(삭제) 요소 생성
+      let newItem = document.createElement("li");
+
+      let textSpan = document.createElement("span");
+      textSpan.textContent = text;
+
+      let deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "삭제";
+
+      // li 안에 span과 button 순서대로 넣기
+      newItem.append(textSpan);
+      newItem.append(deleteBtn);
+
+      // 클릭 및 삭제 이벤트 연결
+      setupTodoEvents(newItem);
+
+      // 목록에 추가
+      let todoList = document.querySelector("#todoList");
+      todoList.append(newItem);
+
+      // 스크롤을 맨 아래로 부드럽게 이동
+      todoList.parentElement.scrollTo({
+        top: todoList.parentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+
+      // 개수 갱신 및 입력창 초기화
+      updateCount();
+      input.value = "";
+      input.focus();
+    }
+
+    // 7. 엔터키(Enter) 입력 지원 추가
+    document.querySelector("#todoInput").addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addTodo();
+      }
+    });
+  </script>
+
+</body>
+</html>
